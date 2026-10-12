@@ -12,6 +12,10 @@ npm.cmd start
 
 Open **http://localhost:3000**. `index.html` opened directly as a `file://` URL is no longer the app: the API and database require the server.
 
+## Use the dashboard
+
+The main page shows the latest contract comparisons and trading activity. Open **Analysis settings** to adjust the reference contract, history window, signal threshold, expiry limits, or estimated trading cost. Open **More analysis** for the historical chart, calculation notes, and strategy test. A “cheap” or “rich” flag describes an unusual historical price gap; it is not a trade recommendation. If the database has too little settlement history, the app reports that there is not enough data instead of inventing a result.
+
 The first start creates `data/tola.sqlite` and seeds it from:
 
 - `data/real-seed.js`: 24 real settlement rows from the supplied 7 October 2026 MCX bhavcopy;

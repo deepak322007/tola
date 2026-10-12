@@ -3,6 +3,7 @@
 
   const analytics = window.TolaAnalytics;
   const elements = {
+    clock: document.getElementById("live-clock"),
     asOf: document.getElementById("as-of"),
     message: document.getElementById("message"),
     reference: document.getElementById("reference-select"),
@@ -30,6 +31,7 @@
     backtestEmpty: document.getElementById("backtest-empty")
   };
 
+  const analysisDetails = document.querySelector(".analysis");
   let records = [];
   let activityRecords = [];
   let result = null;
@@ -37,6 +39,24 @@
   const numberFormat = new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 });
   const priceFormat = new Intl.NumberFormat("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const decimalFormat = new Intl.NumberFormat("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const clockFormat = new Intl.DateTimeFormat("en-IN", {
+    weekday: "short",
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit"
+  });
+
+  function updateClock() {
+    const now = new Date();
+    elements.clock.dateTime = now.toISOString();
+    elements.clock.textContent = clockFormat.format(now);
+  }
+
+  updateClock();
+  window.setInterval(updateClock, 1000);
 
   function showMessage(text, kind) {
     elements.message.textContent = text;
@@ -312,6 +332,9 @@
       hideMessage();
       render();
     }));
+  analysisDetails.addEventListener("toggle", () => {
+    if (analysisDetails.open && result) renderChart(result, getOptions().threshold);
+  });
   window.addEventListener("resize", () => { if (result) renderChart(result, getOptions().threshold); });
 
   async function loadDatabase() {
@@ -344,8 +367,9 @@
       hideMessage();
       render();
     } catch (error) {
-      elements.asOf.textContent = "server unavailable";
-      showMessage(`Can't load TOLA database: ${error.message}. Start the web server with npm start and open http://localhost:3000.`, "error");
+      elements.asOf.textContent = "Coverage dates are unavailable until the server connects.";
+      hideMessage();
+      console.error("TOLA could not load data from the app server", error);
     }
   }
 
