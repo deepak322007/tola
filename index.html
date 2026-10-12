@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Do the gaps between MCX gold futures sizes mean anything once you pay to trade them?">
+<title>TOLA · MCX gold, contract by contract</title>
+<link rel="stylesheet" href="./styles.css?v=11">
+<script src="./analytics.js?v=11" defer></script>
+<script src="./app.js?v=11" defer></script>
+</head>
+<body>
+<header class="top">
+  <a class="mark" href="#">TOLA</a>
+  <span class="top-sub">MCX gold futures · relative value</span>
+  <span class="as-of" id="as-of">connecting to TOLA API…</span>
+</header>
+
+<main class="page">
+  <section class="hero">
+    <div>
+      <h1>Is the small gold contract priced like the big one?</h1>
+      <p class="lede">GOLDM, GOLDTEN, GOLDGUINEA and GOLDPETAL are the same metal in different sizes. TOLA puts them on one footing (₹ per 10 g of pure gold) and asks whether the gaps between them survive trading costs. Often they don't, and the page will say so.</p>
+    </div>
+  </section>
+
+  <section class="controls" aria-label="Analysis settings">
+    <label>Reference contract
+      <select id="reference-select"><option value="GOLDM">GOLDM</option></select></label>
+    <label>History before a z-score counts
+      <select id="lookback-select"><option value="20">20 sessions</option><option value="30">30 sessions</option><option value="40">40 sessions</option></select></label>
+    <label>Flag at
+      <select id="threshold-select"><option value="2">2.0σ</option><option value="2.5">2.5σ</option><option value="3">3.0σ</option></select></label>
+    <label>Pair expiries up to
+      <select id="gap-select"><option value="7">7 days apart</option><option value="10" selected>10 days apart</option><option value="14">14 days apart</option></select></label>
+    <label>Stop trading before expiry
+      <select id="buffer-select"><option value="3">3 days</option><option value="5" selected>5 days</option><option value="7">7 days</option></select></label>
+    <label>Cost per leg, one way
+      <span class="input-suffix"><input id="cost-input" type="number" min="0" max="100" step="0.5" value="5"><span>bps</span></span></label>
+  </section>
+
+  <div class="message" id="message" role="status" aria-live="polite" hidden></div>
+  <p class="note" id="data-note"><strong>Live application data.</strong> Exchange data is loaded from the TOLA server database. Settlement prices are official end-of-day values, not executable prices; activity totals are not market depth.</p>
+
+  <section class="summary" aria-label="Summary">
+    <div><span class="num" id="signal-count">—</span><span class="cap">pairs flagged today</span><small id="signal-note"></small></div>
+    <div><span class="num" id="observation-count">—</span><span class="cap">matched observations</span><small>pair × day</small></div>
+    <div><span class="num" id="strategy-return">—</span><span class="cap">strategy, bps after costs</span><small id="strategy-note"></small></div>
+    <div><span class="num" id="gold-return">—</span><span class="cap">GOLDM itself, bps</span><small>over the same days: what holding gold would have done</small></div>
+  </section>
+
+  <section class="block activity-block">
+    <h2>Trading activity by contract</h2>
+    <p class="sub">MCX FUTCOM gold activity, aggregated across all expiries. Compare each contract with its own preceding 20-session average; different lot sizes make raw lot counts incomparable across contracts.</p>
+    <div class="table-scroll"><table>
+      <thead><tr><th>Contract</th><th>Latest session</th><th>Lots · all expiries</th><th>Prior 20-session avg</th><th>Vs own average</th><th>Total value · ₹ lakh</th></tr></thead>
+      <tbody id="activity-rows"></tbody></table>
+      <div class="table-empty" id="activity-empty" hidden>No contract-activity records are available.</div></div>
+    <p class="foot">Source: supplied MCX DateWise Detail Report. It contains daily aggregate activity, not prices or per-expiry volumes. Turnover and traded lots are context only—not market depth, executable capacity, or an input to the relative-value backtest.</p>
+  </section>
+
+  <section class="block">
+    <h2>Every matched pair on the latest session</h2>
+    <p class="sub">All expiries, not just the nearest. Premium is the comparison contract versus GOLDM, per pure gram. Part of any premium is just carry, because the expiries differ.</p>
+    <div class="table-scroll"><table>
+      <thead><tr><th>Contract</th><th>Expiries (GOLDM / other)</th><th>Apart</th><th>₹ per 10 g pure</th><th>Premium</th><th>z</th><th>Lots traded (GOLDM / other)</th><th>Read</th></tr></thead>
+      <tbody id="monitor-rows"></tbody></table>
+      <div class="table-empty" id="table-empty" hidden>No pair is close enough in expiry to compare fairly.</div></div>
+  </section>
+
+  <section class="block two">
+    <div>
+      <h2>Relative z-score over time · <span id="chart-contract">all pairs</span></h2>
+      <p class="sub">Each point is judged only against earlier days of the same expiry pair. Dashed lines are the flag threshold.</p>
+      <select id="chart-select" aria-label="Chart comparison contract"><option value="ALL">All contracts</option></select>
+      <div class="chart-wrap">
+        <canvas id="spread-chart" role="img" aria-label="Relative z-scores over time"></canvas>
+        <div class="empty-chart" id="chart-empty" hidden>Not enough sessions yet. Each expiry pair needs its warm-up history first.</div>
+      </div>
+      <p class="foot" id="chart-period">—</p>
+    </div>
+    <div class="rules">
+      <h2>Ground rules</h2>
+      <ol>
+        <li><b>Same units first.</b> Quote base and purity are removed before anything is compared.</li>
+        <li><b>Expiry stays in view.</b> Contracts are paired by nearest expiry; there is no stitched front-month series.</li>
+        <li><b>Only yesterday's evidence.</b> A signal today uses earlier days only, and is traded at the following close.</li>
+        <li><b>Both legs pay.</b> Costs are charged on each side of every position change.</li>
+      </ol>
+      <p class="foot">A quiet monitor is a valid result. Volume is not depth.</p>
+    </div>
+  </section>
+
+  <section class="block">
+    <h2>Did trading the gaps pay?</h2>
+    <p class="sub">Bps of one leg's notional, cumulative. Gross is before costs; the GOLDM column is context, not skill.</p>
+    <div class="table-scroll"><table>
+      <thead><tr><th>Pair</th><th>Days</th><th>Entries</th><th>Gross</th><th>Costs</th><th>Net</th><th>GOLDM leg</th><th>Sharpe*</th></tr></thead>
+      <tbody id="backtest-rows"></tbody></table>
+      <div class="table-empty" id="backtest-empty" hidden>Not enough history to test this yet.</div></div>
+    <p class="foot">*Daily, annualised with √252; descriptive only. Closing settlements stand in for fills; market impact, margin, tax and funding are ignored. The expiry buffer is a calendar-day proxy, not the exchange's tender calendar. GOLDTEN's history starts at its listing and is never extended.</p>
+  </section>
+
+  <footer class="end">TOLA is a research tool, not investment advice.</footer>
+</main>
+</body>
+</html>

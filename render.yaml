@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: tola-mcx-gold
+    runtime: node
+    plan: starter
+    buildCommand: npm test && npm run check
+    startCommand: npm start
+    healthCheckPath: /api/health
+    disk:
+      name: tola-sqlite
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: TOLA_DB_PATH
+        value: /var/data/tola.sqlite
+      - key: TOLA_ADMIN_TOKEN
+        generateValue: true

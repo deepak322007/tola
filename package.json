@@ -1,0 +1,15 @@
+{
+  "name": "tola-mcx-gold",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Persistent MCX gold futures research web app",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "start": "node server.mjs",
+    "dev": "node --watch server.mjs",
+    "test": "node --test tests/analytics.test.js tests/server.test.mjs",
+    "check": "node --check analytics.js && node --check app.js && node --check server.mjs && node --check scripts/import-mcx.mjs"
+  }
+}

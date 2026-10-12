@@ -1,0 +1,6 @@
+node_modules
+.git
+data/tola.sqlite
+data/tola.sqlite-shm
+data/tola.sqlite-wal
+tests
